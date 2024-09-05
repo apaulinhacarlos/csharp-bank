@@ -1,3 +1,5 @@
+using System.Security.AccessControl;
+
 namespace Trybank.Lib;
 
 public class TrybankLib
@@ -21,6 +23,7 @@ public class TrybankLib
         Bank = new int[maxAccounts, 4];
     }
 
+    // verifica se usuario esta logado
     public void UserIsLogged() {
         // verifica se usuario esta logado
         if (!Logged)
@@ -28,6 +31,15 @@ public class TrybankLib
             throw new AccessViolationException("Usuário não está logado");
         }
     }
+
+    // verifica se usuario logado possui saldo suficiente
+    public void BalanceIsSufficient(int value) {
+        if (Bank[loggedUser, 3] < value)
+        {
+            throw new InvalidOperationException("Saldo insuficiente");
+        }
+    }
+
     // 1. Construa a funcionalidade de cadastrar novas contas
     public void RegisterAccount(int number, int agency, int pass)
         {
@@ -112,19 +124,24 @@ public class TrybankLib
     public void Withdraw(int value)
     {
         UserIsLogged();
-
-        if (Bank[loggedUser, 3] < value)
-        {
-            throw new InvalidOperationException("Saldo insuficiente");
-        }
+        BalanceIsSufficient(value);
         Bank[loggedUser, 3] -= value;
     }
 
     // 7. Construa a funcionalidade de transferir dinheiro entre contas
     public void Transfer(int destinationNumber, int destinationAgency, int value)
     {
-        throw new NotImplementedException();
-    }
+        UserIsLogged();
+        BalanceIsSufficient(value);
 
-   
+        for (int i = 0; i < registeredAccounts; i++)
+        {
+            if (Bank[i, 0] == destinationNumber && Bank[i, 1] == destinationAgency)
+            {
+                Bank[i, 3] += value;
+            }
+        }
+        
+        Bank[loggedUser, 3] -= value;
+    }
 }
